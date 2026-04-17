@@ -211,7 +211,7 @@ export const SlotMachineViewer = ({ streams, onBack }: SlotMachineViewerProps) =
   };
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-b from-purple-900 via-pink-900 to-red-900 overflow-hidden">
+    <div className="relative w-full h-full bg-gradient-to-b from-purple-900 via-pink-900 to-red-900 overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIvPjwvc3ZnPg==')] opacity-20 animate-pulse" />
       

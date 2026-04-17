@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Loader2 } from "lucide-react";
 import { VideoCategory } from "@/types/video";
 import { useToast } from "@/hooks/use-toast";
 import { BasePay } from "./BasePay";
 import { useAccount } from "wagmi";
+import { useContentSubmission } from "@/hooks/useVideoActions";
 
 const CATEGORIES: VideoCategory[] = ['safety', 'fun', 'shopping', 'food', 'culture', 'nightlife', 'adventure', 'nature'];
 
@@ -16,9 +17,11 @@ export const ContentSubmissionModal = () => {
   const [open, setOpen] = useState(false);
   const [embedUrl, setEmbedUrl] = useState("");
   const [location, setLocation] = useState("");
-  const { isConnected } = useAccount();
+  const [country, setCountry] = useState("");
+  const { isConnected, address } = useAccount();
   const [selectedCategories, setSelectedCategories] = useState<VideoCategory[]>([]);
   const { toast } = useToast();
+  const { submitContent, loading } = useContentSubmission();
 
   const toggleCategory = (category: VideoCategory) => {
     setSelectedCategories(prev =>
@@ -28,9 +31,9 @@ export const ContentSubmissionModal = () => {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!embedUrl || !location || selectedCategories.length === 0) {
       toast({
         title: "Missing Information",
@@ -40,14 +43,28 @@ export const ContentSubmissionModal = () => {
       return;
     }
 
-    toast({
-      title: "Content Submitted! 🎉",
-      description: `Your content will be added to ${location} stream with ${selectedCategories.length} tags`,
+    const success = await submitContent({
+      embedUrl,
+      location,
+      country: country || undefined,
+      categories: selectedCategories,
+      streamTags: [location, ...(country ? [country] : [])],
+      submitterAddress: address,
     });
 
-    // Reset form
+    if (success) {
+      setEmbedUrl("");
+      setLocation("");
+      setCountry("");
+      setSelectedCategories([]);
+      setOpen(false);
+    }
+  };
+
+  const resetAndClose = () => {
     setEmbedUrl("");
     setLocation("");
+    setCountry("");
     setSelectedCategories([]);
     setOpen(false);
   };
@@ -56,10 +73,10 @@ export const ContentSubmissionModal = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
-          className="fixed bottom-24 right-4 z-30 w-14 h-14 rounded-full shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:scale-110 transition-transform"
+          className="fixed bottom-[4.5rem] right-3 sm:bottom-20 sm:right-4 z-30 w-11 h-11 sm:w-14 sm:h-14 rounded-full shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:scale-110 transition-transform"
           size="icon"
         >
-          <Plus className="w-6 h-6" />
+          <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
@@ -80,16 +97,28 @@ export const ContentSubmissionModal = () => {
             <p className="text-xs text-muted-foreground">YouTube, TikTok, Instagram, or direct video URL</p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              type="text"
-              placeholder="e.g. Gaborone, Lagos, Nairobi..."
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              required
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="location">Location / City</Label>
+              <Input
+                id="location"
+                type="text"
+                placeholder="e.g. Nairobi"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="country">Country</Label>
+              <Input
+                id="country"
+                type="text"
+                placeholder="e.g. Kenya"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -111,25 +140,36 @@ export const ContentSubmissionModal = () => {
             </div>
           </div>
 
-          <BasePay
-            amount={0.10}
-            disabled={!isConnected || selectedCategories.length === 0 || !location.trim() || !embedUrl.trim()}
-            onSuccess={() => {
-              toast({
-                title: "Content submitted!",
-                description: "Your video has been posted to the stream",
-              });
-              setOpen(false);
-              // Reset form
-              setEmbedUrl("");
-              setLocation("");
-              setSelectedCategories([]);
-            }}
-          >
-            Post to Stream ($0.10)
-          </BasePay>
+          {isConnected ? (
+            <BasePay
+              amount={0.10}
+              disabled={loading || selectedCategories.length === 0 || !location.trim() || !embedUrl.trim()}
+              onSuccess={() => {
+                submitContent({
+                  embedUrl,
+                  location,
+                  country: country || undefined,
+                  categories: selectedCategories,
+                  streamTags: [location, ...(country ? [country] : [])],
+                  submitterAddress: address,
+                  paidAmount: 0.10,
+                }).then(ok => { if (ok) resetAndClose(); });
+              }}
+            >
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Submitting…</> : 'Post to Stream ($0.10)'}
+            </BasePay>
+          ) : (
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || selectedCategories.length === 0 || !location.trim() || !embedUrl.trim()}
+            >
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Submitting…</> : 'Submit (Free Preview)'}
+            </Button>
+          )}
         </form>
       </DialogContent>
     </Dialog>
   );
 };
+

@@ -108,7 +108,7 @@ export const MultiStreamViewer = ({
   };
 
   return (
-    <div className="relative w-full h-screen bg-black">
+    <div className="relative w-full h-full bg-black">
       {/* Back Button */}
       {onBack && (
         <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-50">

@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "api": "node server/api.mjs",
+    "db:migrate": "node scripts/runMigration.mjs",
+    "db:seed": "node scripts/seedSupabase.mjs",
+    "db:setup": "node scripts/runMigration.mjs && node scripts/seedSupabase.mjs",
+    "seed:supabase": "node scripts/seedSupabase.mjs",
     "upload": "node scripts/uploadVideos.mjs",
     "trim-videos": "node scripts/trimVideos.mjs",
     "replace-videos": "node scripts/replaceVideos.mjs",
@@ -99,6 +103,7 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "lovable-tagger": "^1.1.11",
+    "pg": "^8.20.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
